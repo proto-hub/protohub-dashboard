@@ -4,12 +4,12 @@ An interactive web application built for **ProtoHub** to manage project sales re
 
 ---
 
-## 🔐 Tab Access Passwords
+## 🔐 Protected Access Control
 
-Both sections are password-protected with independent passkeys:
+Both sections are password-protected with independent administrative passkeys:
 
 | Feature / Tab | Description |
-| :--- | :--- | :--- |
+| :--- | :--- |
 | **Financial Dashboard** | Access 2025 & 2026 project sales records, dynamic charts, and record editing |
 | **Customer Billing** | Generate official invoices and download in PNG & PDF formats |
 
@@ -72,14 +72,11 @@ npm run build
 
 ### Deploying to GitHub & Vercel:
 
-1. **Initialize Git Repository and Push to GitHub**:
+1. **Push to GitHub**:
    ```bash
-   git init
    git add .
-   git commit -m "Initial commit of ProtoHub Dashboard & Billing System"
-   git branch -M main
-   git remote add origin https://github.com/<YOUR_USERNAME>/<YOUR_REPOSITORY_NAME>.git
-   git push -u origin main
+   git commit -m "Your commit message"
+   git push origin main
    ```
 
 2. **Deploy on Vercel**:

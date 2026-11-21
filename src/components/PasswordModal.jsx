@@ -32,11 +32,6 @@ export const PasswordModal = ({ isOpen, tabName, onClose, onSuccess }) => {
     }
   };
 
-  const fillQuickPassword = () => {
-    setPassword(targetPassword);
-    setError('');
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
       <div 
@@ -109,18 +104,6 @@ export const PasswordModal = ({ isOpen, tabName, onClose, onSuccess }) => {
               <ShieldCheck className="w-4 h-4" />
               {isSubmitting ? 'Authenticating...' : 'Unlock Tab'}
             </button>
-
-            {/* Quick helper badge for user ease */}
-            <div className="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-              <span>Required password:</span>
-              <button
-                type="button"
-                onClick={fillQuickPassword}
-                className="text-cyan-400 hover:text-cyan-300 font-mono underline underline-offset-2 hover:bg-cyan-500/10 px-2 py-0.5 rounded transition"
-              >
-                {targetPassword}
-              </button>
-            </div>
           </div>
         </form>
       </div>

@@ -247,16 +247,10 @@ export function App() {
 
             </div>
 
-            {/* Quick credentials hint note */}
-            <div className="bg-slate-900/60 border border-slate-800/80 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-400">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-cyan-400 shrink-0" />
-                <span>Protected with secure passkeys:</span>
-              </div>
-              <div className="flex items-center gap-4 font-mono text-[11px]">
-                <span>Dashboard: <strong className="text-cyan-400">ProtoHub@Dashboard</strong></span>
-                <span>Bill: <strong className="text-cyan-400">ProtoHub@Bill</strong></span>
-              </div>
+            {/* Security Notice */}
+            <div className="bg-slate-900/60 border border-slate-800/80 p-4 rounded-2xl flex items-center justify-center gap-2 text-xs text-slate-400">
+              <ShieldCheck className="w-4 h-4 text-cyan-400 shrink-0" />
+              <span>Protected sections require administrative passkey to unlock.</span>
             </div>
           </div>
         )}
