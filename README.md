@@ -8,10 +8,10 @@ An interactive web application built for **ProtoHub** to manage project sales re
 
 Both sections are password-protected with independent passkeys:
 
-| Feature / Tab | Authorized Password | Description |
+| Feature / Tab | Description |
 | :--- | :--- | :--- |
-| **Financial Dashboard** | `ProtoHub@Dashboard` | Access 2025 & 2026 project sales records, dynamic charts, and record editing |
-| **Customer Billing** | `ProtoHub@Bill` | Generate official invoices and download in PNG & PDF formats |
+| **Financial Dashboard** | Access 2025 & 2026 project sales records, dynamic charts, and record editing |
+| **Customer Billing** | Generate official invoices and download in PNG & PDF formats |
 
 ---
 
