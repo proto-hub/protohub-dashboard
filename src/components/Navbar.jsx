@@ -1,5 +1,6 @@
 import React from 'react';
 import { LayoutDashboard, ReceiptText, Lock, Unlock, LogOut, TrendingUp, Sparkles } from 'lucide-react';
+import { PROTOHUB_LOGO_BASE64 } from '../data/logoBase64';
 
 export const Navbar = ({ 
   activeTab, 
@@ -19,12 +20,9 @@ export const Navbar = ({
             <div className="relative group cursor-pointer" onClick={() => onSelectTab(activeTab)}>
               <div className="w-11 h-11 rounded-xl bg-slate-900 border border-slate-700/80 p-1 flex items-center justify-center shadow-md shadow-cyan-500/10 group-hover:border-cyan-500 transition-colors">
                 <img 
-                  src="/logo.png" 
+                  src={PROTOHUB_LOGO_BASE64} 
                   alt="ProtoHub Logo" 
                   className="w-full h-full object-contain rounded-lg"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
                 />
               </div>
               <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-slate-950 ring-1 ring-emerald-500/50"></span>

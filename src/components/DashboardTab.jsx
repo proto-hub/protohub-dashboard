@@ -4,7 +4,6 @@ import {
   Download, 
   Search, 
   Filter, 
-  RotateCcw, 
   Edit3, 
   Trash2, 
   Receipt, 
@@ -28,7 +27,6 @@ export const DashboardTab = ({
   projects, 
   onSaveProject, 
   onDeleteProject, 
-  onResetData, 
   onGenerateBillFromProject 
 }) => {
   // Filters & Search
@@ -133,12 +131,6 @@ export const DashboardTab = ({
   const handleOpenEditModal = (project) => {
     setProjectToEdit(project);
     setIsModalOpen(true);
-  };
-
-  const handleResetWithConfirm = () => {
-    if (window.confirm("Are you sure you want to reset all data back to the default 2025 & 2026 records?")) {
-      onResetData();
-    }
   };
 
   return (
@@ -313,15 +305,6 @@ export const DashboardTab = ({
               <option value="Income">Income Only</option>
               <option value="Expenditure">Expenditure Only</option>
             </select>
-
-            {/* Reset Data to Default */}
-            <button
-              onClick={handleResetWithConfirm}
-              title="Reset records to default 2025/2026 data"
-              className="p-2 text-slate-400 hover:text-amber-400 bg-slate-950 hover:bg-amber-500/10 border border-slate-800 rounded-xl transition cursor-pointer"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
           </div>
         </div>
 

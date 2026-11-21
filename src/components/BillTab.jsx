@@ -5,20 +5,17 @@ import {
   FileImage, 
   FileText, 
   Save, 
-  RotateCcw, 
   CheckCircle, 
   Sparkles, 
   Phone, 
   Building, 
   User, 
-  CreditCard, 
-  Calendar,
-  Layers,
-  ArrowRight
+  RotateCcw
 } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 import jsPDF from 'jspdf';
 import { parseNum, formatCurrency } from '../utils/storage';
+import { PROTOHUB_LOGO_BASE64 } from '../data/logoBase64';
 
 export const BillTab = ({ initialBillData, onSaveToDashboard }) => {
   // Today's date in DD/MM/YYYY
@@ -44,6 +41,7 @@ export const BillTab = ({ initialBillData, onSaveToDashboard }) => {
   });
 
   const [isExporting, setIsExporting] = useState(false);
+  const [exportMessage, setExportMessage] = useState('');
   const [savedSuccess, setSavedSuccess] = useState(false);
   const billPreviewRef = useRef(null);
 
@@ -59,46 +57,64 @@ export const BillTab = ({ initialBillData, onSaveToDashboard }) => {
     setBillData(prev => ({ ...prev, [field]: value }));
   };
 
+  // Helper to generate PNG data URL reliably
+  const captureInvoiceDataUrl = async () => {
+    if (!billPreviewRef.current) {
+      throw new Error('Invoice container not found');
+    }
+    const element = billPreviewRef.current;
+    
+    // Ensure element styles are fully rendered
+    const dataUrl = await toPng(element, {
+      quality: 1,
+      pixelRatio: 2,
+      backgroundColor: '#ffffff',
+      cacheBust: true,
+      skipAutoScale: true
+    });
+    return dataUrl;
+  };
+
   // Export to PNG
   const handleDownloadPNG = async () => {
-    if (!billPreviewRef.current) return;
     setIsExporting(true);
+    setExportMessage('Generating high-resolution PNG...');
     try {
-      const element = billPreviewRef.current;
-      const canvas = await html2canvas(element, {
-        scale: 3, // Ultra-high resolution crisp image
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
-      });
-      const dataUrl = canvas.toDataURL('image/png');
+      const dataUrl = await captureInvoiceDataUrl();
+      const cleanCustomer = billData.customerName ? billData.customerName.trim().replace(/[^a-zA-Z0-9]/g, '_') : 'Receipt';
+      const filename = `ProtoHub_Invoice_${cleanCustomer}_${billData.invoiceNumber}.png`;
+
       const link = document.createElement('a');
-      link.download = `ProtoHub_Bill_${billData.customerName ? billData.customerName.replace(/\s+/g, '_') : 'Receipt'}_${billData.invoiceNumber}.png`;
+      link.download = filename;
       link.href = dataUrl;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
     } catch (err) {
       console.error('Failed to export bill as PNG:', err);
-      alert('Error generating PNG bill. Please try again.');
+      alert('Error downloading PNG bill. Please try again.');
     } finally {
       setIsExporting(false);
+      setExportMessage('');
     }
   };
 
   // Export to PDF
   const handleDownloadPDF = async () => {
-    if (!billPreviewRef.current) return;
     setIsExporting(true);
+    setExportMessage('Generating printable PDF...');
     try {
-      const element = billPreviewRef.current;
-      const canvas = await html2canvas(element, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
-      });
-      const imgData = canvas.toDataURL('image/png');
+      const dataUrl = await captureInvoiceDataUrl();
       
-      // Standard A4: 210mm x 297mm
+      // Create image object to measure natural dimensions
+      const img = new Image();
+      img.src = dataUrl;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+
+      // Standard A4 portrait in mm: 210 x 297
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -106,15 +122,17 @@ export const BillTab = ({ initialBillData, onSaveToDashboard }) => {
       });
 
       const pdfWidth = 210;
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`ProtoHub_Bill_${billData.customerName ? billData.customerName.replace(/\s+/g, '_') : 'Receipt'}_${billData.invoiceNumber}.pdf`);
+      const pdfHeight = (img.height * pdfWidth) / img.width;
+
+      pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      const cleanCustomer = billData.customerName ? billData.customerName.trim().replace(/[^a-zA-Z0-9]/g, '_') : 'Receipt';
+      pdf.save(`ProtoHub_Invoice_${cleanCustomer}_${billData.invoiceNumber}.pdf`);
     } catch (err) {
       console.error('Failed to export bill as PDF:', err);
-      alert('Error generating PDF bill. Please try again.');
+      alert('Error downloading PDF bill. Please try again.');
     } finally {
       setIsExporting(false);
+      setExportMessage('');
     }
   };
 
@@ -127,7 +145,7 @@ export const BillTab = ({ initialBillData, onSaveToDashboard }) => {
 
     const newRecord = {
       id: `${new Date().getFullYear()}-${Date.now()}`,
-      serialNumber: 1, // will be reassigned or auto incremented
+      serialNumber: 1,
       customerId: billData.customerId || 'C' + Math.floor(20 + Math.random() * 50),
       customerName: billData.customerName,
       customerNumber: billData.customerNumber,
@@ -220,7 +238,7 @@ export const BillTab = ({ initialBillData, onSaveToDashboard }) => {
               onClick={handleResetForm}
               className="text-xs text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer"
             >
-              <RotateCcw className="w-3.5 h-3.5" /> Reset
+              <RotateCcw className="w-3.5 h-3.5" /> Reset Form
             </button>
           </div>
 
@@ -470,7 +488,7 @@ export const BillTab = ({ initialBillData, onSaveToDashboard }) => {
                 className="py-3 px-4 rounded-xl text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-cyan-500/50 flex items-center justify-center gap-2 shadow-md transition cursor-pointer disabled:opacity-50"
               >
                 <FileImage className="w-4 h-4 text-cyan-400" />
-                <span>{isExporting ? 'Generating...' : 'Download PNG'}</span>
+                <span>{isExporting ? 'Processing...' : 'Download PNG'}</span>
               </button>
 
               <button
@@ -480,9 +498,14 @@ export const BillTab = ({ initialBillData, onSaveToDashboard }) => {
                 className="py-3 px-4 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/25 transition cursor-pointer disabled:opacity-50"
               >
                 <FileText className="w-4 h-4" />
-                <span>{isExporting ? 'Generating...' : 'Download PDF'}</span>
+                <span>{isExporting ? 'Processing...' : 'Download PDF'}</span>
               </button>
             </div>
+            {exportMessage && (
+              <p className="text-[11px] text-center text-cyan-400 animate-pulse mt-1">
+                {exportMessage}
+              </p>
+            )}
           </div>
 
         </div>
@@ -498,28 +521,36 @@ export const BillTab = ({ initialBillData, onSaveToDashboard }) => {
             <span>A4 Document Proportion</span>
           </div>
 
-          {/* INVOICE CARD CANVAS CONTAINER (Captured by html2canvas) */}
+          {/* INVOICE CARD CONTAINER (Captured for PNG/PDF) */}
           <div 
             ref={billPreviewRef}
             className="w-full max-w-[620px] bg-white text-slate-900 rounded-2xl shadow-2xl overflow-hidden p-8 border border-slate-200"
-            style={{ minHeight: '800px', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+            style={{ 
+              minHeight: '800px', 
+              fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif",
+              backgroundColor: '#ffffff',
+              color: '#0f172a'
+            }}
           >
             
             {/* Top Brand & Invoice Header */}
             <div className="flex items-start justify-between pb-6 border-b-2 border-slate-100">
               <div className="flex items-center gap-3.5">
-                <div className="w-14 h-14 bg-slate-950 rounded-2xl p-2 flex items-center justify-center shadow-md">
+                <div 
+                  className="w-14 h-14 rounded-2xl p-2 flex items-center justify-center shadow-md"
+                  style={{ backgroundColor: '#090d16' }}
+                >
                   <img 
-                    src="/logo.png" 
+                    src={PROTOHUB_LOGO_BASE64} 
                     alt="ProtoHub" 
                     className="w-full h-full object-contain"
                   />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-black tracking-tight text-slate-950 flex items-center gap-1.5">
+                  <h1 className="text-2xl font-black tracking-tight flex items-center gap-1.5" style={{ color: '#090d16' }}>
                     ProtoHub
                   </h1>
-                  <p className="text-xs font-semibold text-cyan-600 tracking-wide uppercase">
+                  <p className="text-xs font-semibold tracking-wide uppercase" style={{ color: '#0891b2' }}>
                     Engineering & Project Solutions
                   </p>
                   <p className="text-[11px] text-slate-500 mt-0.5">
@@ -529,13 +560,14 @@ export const BillTab = ({ initialBillData, onSaveToDashboard }) => {
               </div>
 
               <div className="text-right">
-                <span className={`inline-block px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider mb-2 ${
-                  billData.paymentStatus === 'Paid'
-                    ? 'bg-emerald-100 text-emerald-700 border border-emerald-300'
-                    : billData.paymentStatus === 'Partial'
-                    ? 'bg-amber-100 text-amber-700 border border-amber-300'
-                    : 'bg-rose-100 text-rose-700 border border-rose-300'
-                }`}>
+                <span 
+                  className="inline-block px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider mb-2 border"
+                  style={{
+                    backgroundColor: billData.paymentStatus === 'Paid' ? '#ecfdf5' : billData.paymentStatus === 'Partial' ? '#fffbeb' : '#fff1f2',
+                    color: billData.paymentStatus === 'Paid' ? '#047857' : billData.paymentStatus === 'Partial' ? '#b45309' : '#be123c',
+                    borderColor: billData.paymentStatus === 'Paid' ? '#a7f3d0' : billData.paymentStatus === 'Partial' ? '#fde68a' : '#fecdd3'
+                  }}
+                >
                   {billData.paymentStatus === 'Paid' ? 'PAID IN FULL' : billData.paymentStatus}
                 </span>
                 <p className="text-xs font-mono font-bold text-slate-800">
@@ -578,7 +610,7 @@ export const BillTab = ({ initialBillData, onSaveToDashboard }) => {
                   Payment Particulars
                 </span>
                 <p className="text-xs font-medium text-slate-800">
-                  Payment Mode: <strong className="font-mono text-cyan-700">{billData.modeOfPayment}</strong>
+                  Payment Mode: <strong className="font-mono" style={{ color: '#0e7490' }}>{billData.modeOfPayment}</strong>
                 </p>
                 <p className="text-xs text-slate-600 mt-0.5">
                   Status: <strong className="text-slate-800">{billData.paymentStatus}</strong>
@@ -617,7 +649,7 @@ export const BillTab = ({ initialBillData, onSaveToDashboard }) => {
                     <td className="py-3 px-2 text-right font-mono">
                       {actual.toLocaleString('en-IN')}
                     </td>
-                    <td className="py-3 px-2 text-right font-mono text-rose-600">
+                    <td className="py-3 px-2 text-right font-mono" style={{ color: '#e11d48' }}>
                       {(discount + refDiscount) > 0 ? `- ${(discount + refDiscount).toLocaleString('en-IN')}` : '-'}
                     </td>
                     <td className="py-3 px-2 text-right font-mono font-bold text-slate-950">
@@ -637,14 +669,14 @@ export const BillTab = ({ initialBillData, onSaveToDashboard }) => {
                 </div>
 
                 {discount > 0 && (
-                  <div className="flex justify-between text-rose-600">
+                  <div className="flex justify-between" style={{ color: '#e11d48' }}>
                     <span>Discount Applied:</span>
                     <span className="font-mono">- ₹{discount.toLocaleString('en-IN')}</span>
                   </div>
                 )}
 
                 {refDiscount > 0 && (
-                  <div className="flex justify-between text-rose-600">
+                  <div className="flex justify-between" style={{ color: '#e11d48' }}>
                     <span>Referral Discount:</span>
                     <span className="font-mono">- ₹{refDiscount.toLocaleString('en-IN')}</span>
                   </div>
@@ -652,7 +684,7 @@ export const BillTab = ({ initialBillData, onSaveToDashboard }) => {
 
                 <div className="flex justify-between text-slate-950 font-extrabold text-base border-t-2 border-slate-900 pt-2">
                   <span>Total Net Paid:</span>
-                  <span className="font-mono text-cyan-700">₹{totalNet.toLocaleString('en-IN')}</span>
+                  <span className="font-mono" style={{ color: '#0e7490' }}>₹{totalNet.toLocaleString('en-IN')}</span>
                 </div>
 
                 {advance > 0 && (
@@ -663,7 +695,7 @@ export const BillTab = ({ initialBillData, onSaveToDashboard }) => {
                 )}
 
                 {balanceRemaining > 0 && (
-                  <div className="flex justify-between text-amber-700 font-bold">
+                  <div className="flex justify-between font-bold" style={{ color: '#b45309' }}>
                     <span>Balance Remaining:</span>
                     <span className="font-mono">₹{balanceRemaining.toLocaleString('en-IN')}</span>
                   </div>
@@ -684,7 +716,10 @@ export const BillTab = ({ initialBillData, onSaveToDashboard }) => {
             {/* Authorized Signature & Stamp */}
             <div className="mt-8 pt-4 flex items-end justify-between">
               <div>
-                <div className="w-16 h-16 rounded-full border-2 border-dashed border-cyan-500/40 flex items-center justify-center text-cyan-600 text-[10px] font-bold uppercase text-center p-1 transform -rotate-12">
+                <div 
+                  className="w-16 h-16 rounded-full border-2 border-dashed flex items-center justify-center text-[10px] font-bold uppercase text-center p-1 transform -rotate-12"
+                  style={{ borderColor: 'rgba(6, 182, 212, 0.5)', color: '#0891b2' }}
+                >
                   ProtoHub Seal
                 </div>
               </div>

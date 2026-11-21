@@ -261,7 +261,6 @@ export function App() {
             projects={projects}
             onSaveProject={handleSaveProject}
             onDeleteProject={handleDeleteProject}
-            onResetData={handleResetData}
             onGenerateBillFromProject={handleGenerateBillFromProject}
           />
         )}
